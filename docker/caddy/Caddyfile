@@ -1,10 +1,9 @@
 {
     # Global options
-    auto_https off
     admin off
 }
 
-:80 {
+{$SITE_ADDRESS::80} {
     root * /var/www/html/public
 
     # Encode responses with gzip
