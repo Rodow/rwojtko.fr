@@ -1,0 +1,31 @@
+.git
+.github
+.idea
+.vscode
+
+# Rebuilt inside the image
+vendor
+var
+public/assets
+assets/vendor
+node_modules
+
+# Secrets / local env (the real secret is injected at runtime)
+.env
+.env.*
+
+# Not needed in the image
+tests
+Makefile
+README.md
+docker-compose.yml
+docker-compose.dev.yml
+phpunit.dist.xml
+phpunit.xml
+.phpunit.cache
+.gitignore
+.editorconfig
+
+# Keep only the FrankenPHP build files from docker/
+docker
+!docker/frankenphp

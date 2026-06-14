@@ -1,0 +1,25 @@
+# Development overrides. Opt-in only:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+# (the Makefile dev targets do this for you).
+#
+# Builds the dev image locally (Xdebug, timestamp validation) and bind-mounts
+# the source for live editing. Production never loads this file.
+
+services:
+  app:
+    image: rwojtko-dev
+    build:
+      context: .
+      dockerfile: docker/frankenphp/Dockerfile
+      target: dev
+    environment:
+      # Serve plain HTTP locally on HTTP_PORT (no TLS).
+      - SERVER_NAME=:80
+      - APP_ENV=dev
+      - APP_SECRET=dev
+    ports: !override
+      - "${HTTP_PORT:-8080}:80"
+    volumes:
+      - .:/app
+    extra_hosts:
+      - host.docker.internal:host-gateway

@@ -1,99 +1,82 @@
 # rwojtko.fr
 
-Site personnel - Symfony 7 + Docker (Caddy, PostgreSQL, PHP-FPM)
+Site personnel - Symfony 8 + [FrankenPHP](https://frankenphp.dev/).
 
-## Installation locale
+## Architecture
+
+Un **seul conteneur** : FrankenPHP embarque Caddy (serveur web, HTTPS automatique)
+et PHP. L'image de production est **immuable** : le code, les dépendances et les
+assets compilés sont inclus dans l'image au build. Rien n'est monté depuis l'hôte.
+
+- Production : image construite en local, poussée sur **ghcr.io**, tirée par le VPS.
+- Le conteneur tourne en **non-root**, sans capacité autre que `NET_BIND_SERVICE`.
+  Il sert en **HTTPS sur 443** (TLS automatique) ; le port **80** ne fait que
+  rediriger vers HTTPS (et répondre au challenge ACME), sans exposer l'application.
+- Pas de base de données ni de service mail (l'application n'en utilise pas).
+
+## Développement local
 
 ```bash
-# Clone le projet
 git clone git@github.com:Rodow/rwojtko.fr.git
 cd rwojtko.fr
 
-# Crée le fichier .env (copie depuis l'exemple ou crée-le)
-cp .env.local.example .env
-# Ajuste les valeurs si nécessaire (APP_SECRET, etc.)
-
-# Build et lance les containers
-docker compose build
-docker compose up -d
-
-# Installe les dépendances PHP
-docker compose exec php composer install
-
-# Installe les assets JS
-docker compose exec php bin/console importmap:install
+make build         # image dev (Xdebug, rechargement à chaud)
+make up            # http://localhost:8080
+make composer c='install'
+make sf c='importmap:install'
 ```
 
-Le site est accessible sur http://localhost:8080
+> En dev, la source est montée depuis l'hôte (édition à chaud). Les commandes
+> passent par les deux fichiers compose ; le `Makefile` s'en charge.
 
-## Déploiement VPS (Production)
+## Production
 
-### Installation initiale
+### 1. Construire et pousser l'image (depuis ta machine)
 
 ```bash
-# Clone le projet
-cd /var/www
-git clone git@github.com:Rodow/rwojtko.fr.git
-cd rwojtko.fr
+# Authentification ghcr.io (une seule fois) — token avec le scope write:packages
+echo $GHCR_TOKEN | docker login ghcr.io -u rodow --password-stdin
 
-# Crée le fichier .env
-cat > .env << 'EOF'
-APP_ENV=prod
-APP_SECRET=changeme
-DATABASE_URL="postgresql://app:secret@database:5432/app?serverVersion=16&charset=utf8"
-MESSENGER_TRANSPORT_DSN=doctrine://default?auto_setup=0
-MAILER_DSN=null://null
-DEFAULT_URI=https://rwojtko.fr
-HTTP_PORT=80
-HTTPS_PORT=443
-SITE_ADDRESS=rwojtko.fr
+make push          # build l'image prod + push sur ghcr.io/rodow/rwojtko.fr:latest
+```
+
+### 2. Déployer sur le VPS
+
+Le serveur n'a besoin **ni du code source ni de git** : seulement `docker-compose.yml`
+et un fichier `.env`.
+
+```bash
+# Sur le VPS, dans un dossier dédié contenant docker-compose.yml
+cat > .env << EOF
+SERVER_NAME=rwojtko.fr
+APP_SECRET=$(openssl rand -hex 16)
 EOF
 
-# Crée le fichier .env.local avec le vrai secret
-openssl rand -hex 16  # génère un secret
-cat > .env.local << 'EOF'
-APP_ENV=prod
-APP_SECRET=<ton_secret_généré>
-EOF
+# Authentification ghcr.io (idem, token avec read:packages)
+echo $GHCR_TOKEN | docker login ghcr.io -u rodow --password-stdin
 
-# Build et lance les containers
-docker compose build
+docker compose pull
 docker compose up -d
-
-# Installe les dépendances (mode prod)
-docker compose exec php composer install --no-dev --optimize-autoloader
-
-# Installe les assets et compile
-docker compose exec php bin/console importmap:install --env=prod
-docker compose exec php bin/console asset-map:compile --env=prod
 ```
 
 ### Mise à jour
 
 ```bash
-cd /var/www/rwojtko.fr
-git pull
-docker compose exec php composer install --no-dev --optimize-autoloader
-docker compose exec php bin/console cache:clear --env=prod
-docker compose exec php bin/console importmap:install --env=prod
-docker compose exec php bin/console asset-map:compile --env=prod
+# Machine de build
+make push
+
+# VPS
+docker compose pull && docker compose up -d
 ```
 
-## Services Docker
-
-| Service | Port local | Description |
-|---------|------------|-------------|
-| Caddy | 8080 (dev) / 80,443 (prod) | Serveur web avec HTTPS automatique |
-| PHP-FPM | 9000 (interne) | PHP 8.x |
-| PostgreSQL | 5432 | Base de données |
-| Mailcatcher | 1080 | Interface mail (dev uniquement) |
+> Chaque déploiement est une nouvelle image → conteneur recréé. Pas de cache
+> OPcache obsolète, rollback possible en repointant sur un tag précédent.
 
 ## Variables d'environnement
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `APP_ENV` | dev | Environnement Symfony |
-| `APP_SECRET` | - | Secret Symfony (générer avec `openssl rand -hex 16`) |
-| `SITE_ADDRESS` | :80 | Adresse Caddy (`:80` en dev, `rwojtko.fr` en prod) |
-| `HTTP_PORT` | 8080 | Port HTTP exposé |
-| `HTTPS_PORT` | 8443 | Port HTTPS exposé |
+| Variable | Où | Description |
+|----------|----|-------------|
+| `SERVER_NAME` | `.env` (VPS) | Domaine servi par Caddy (ex. `rwojtko.fr`) |
+| `APP_SECRET` | `.env` (VPS) | Secret Symfony (`openssl rand -hex 16`) |
+| `IMAGE` | `.env` (VPS) | Tag d'image à déployer (défaut `ghcr.io/rodow/rwojtko.fr:latest`) |
+| `HTTP_PORT` | dev | Port HTTP local (défaut 8080) |

@@ -1,73 +1,52 @@
-.PHONY: help build up down logs shell composer sf db-create db-migrate db-fixtures install
+.PHONY: help build up down logs shell composer sf image push
 
-# Default target
+# Image name on GitHub Container Registry
+IMAGE ?= ghcr.io/rodow/rwojtko.fr:latest
+
+# Development uses both compose files (base + dev overrides).
+DC = SERVER_NAME=:80 HTTP_PORT=8080 docker compose -f docker-compose.yml -f docker-compose.dev.yml
+
 help:
 	@echo "Usage: make [target]"
 	@echo ""
-	@echo "Targets:"
-	@echo "  install      First time setup (build, up, symfony install)"
-	@echo "  build        Build Docker images"
-	@echo "  up           Start containers"
-	@echo "  down         Stop containers"
-	@echo "  logs         View container logs"
-	@echo "  shell        Open shell in PHP container"
-	@echo "  composer     Run composer command (usage: make composer c='require package')"
-	@echo "  sf           Run Symfony console command (usage: make sf c='cache:clear')"
-	@echo "  db-create    Create database"
-	@echo "  db-migrate   Run migrations"
-	@echo "  db-fixtures  Load fixtures"
-
-# Build Docker images
-build:
-	docker compose build
-
-# Start containers
-up:
-	docker compose up -d
-
-# Stop containers
-down:
-	docker compose down
-
-# View logs
-logs:
-	docker compose logs -f
-
-# Open shell in PHP container
-shell:
-	docker compose exec php sh
-
-# Run composer command
-composer:
-	docker compose exec php composer $(c)
-
-# Run Symfony console command
-sf:
-	docker compose exec php php bin/console $(c)
-
-# Create database
-db-create:
-	docker compose exec php php bin/console doctrine:database:create --if-not-exists
-
-# Run migrations
-db-migrate:
-	docker compose exec php php bin/console doctrine:migrations:migrate --no-interaction
-
-# Load fixtures
-db-fixtures:
-	docker compose exec php php bin/console doctrine:fixtures:load --no-interaction
-
-# First time installation
-install: build up
-	@echo "Waiting for containers to be ready..."
-	@sleep 5
-	@echo "Installing Symfony webapp..."
-	docker compose exec -u root php chown -R www:www /var/www/html
-	docker compose exec php composer create-project symfony/skeleton:"8.0.*" temp --no-interaction
-	docker compose exec php sh -c 'mv temp/* temp/.* . 2>/dev/null || true'
-	docker compose exec php rm -rf temp
-	docker compose exec php composer require webapp --no-interaction
+	@echo "Development:"
+	@echo "  build        Build the dev image"
+	@echo "  up           Start the dev container (http://localhost:8080)"
+	@echo "  down         Stop the container"
+	@echo "  logs         View logs"
+	@echo "  shell        Open a shell in the container"
+	@echo "  composer     Run composer (usage: make composer c='require package')"
+	@echo "  sf           Run a Symfony console command (usage: make sf c='cache:clear')"
 	@echo ""
-	@echo "Installation complete!"
-	@echo "Access your site at: http://localhost:8080"
-	@echo "Mailcatcher at: http://localhost:1080"
+	@echo "Production image:"
+	@echo "  image        Build the production image ($(IMAGE))"
+	@echo "  push         Build and push the production image to ghcr.io"
+
+# --- Development ---
+build:
+	$(DC) build
+
+up:
+	$(DC) up -d
+
+down:
+	$(DC) down
+
+logs:
+	$(DC) logs -f
+
+shell:
+	$(DC) exec app sh
+
+composer:
+	$(DC) exec app composer $(c)
+
+sf:
+	$(DC) exec app php bin/console $(c)
+
+# --- Production image ---
+image:
+	docker build --target prod -t $(IMAGE) -f docker/frankenphp/Dockerfile .
+
+push: image
+	docker push $(IMAGE)
