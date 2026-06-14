@@ -1,0 +1,40 @@
+{
+	{$CADDY_GLOBAL_OPTIONS}
+
+	frankenphp {
+		{$FRANKENPHP_CONFIG}
+	}
+}
+
+{$SERVER_NAME:localhost} {
+	root {$SERVER_ROOT:public/}
+	encode zstd br gzip
+
+	# Security headers
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	# Directives are evaluated in the order written inside `route`.
+	route {
+		# Block access to hidden files (except .well-known)
+		@hidden {
+			path /.*
+			not path /.well-known/*
+		}
+		respond @hidden 404
+
+		# Only the front controller may be executed.
+		@phpNotIndex {
+			path *.php
+			not path /index.php
+		}
+		respond @phpNotIndex 404
+
+		php_server
+	}
+}
