@@ -23,3 +23,8 @@ services:
       - .:/app
     extra_hosts:
       - host.docker.internal:host-gateway
+
+# En local, pas de Caddy frontal : le réseau « web » est créé par compose.
+networks:
+  web:
+    external: false

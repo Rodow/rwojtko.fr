@@ -2,7 +2,9 @@
 
 Site personnel - Symfony 8 + [FrankenPHP](https://frankenphp.dev/).
 
-En production : un seul conteneur (Caddy + PHP), image immuable poussée sur ghcr.io.
+En production : un seul conteneur (FrankenPHP), image immuable poussée sur ghcr.io. Il sert du
+HTTP simple (`SERVER_NAME=:80`) sur le réseau Docker `web` : le Caddy frontal du serveur
+(`/opt/caddy`) tient les ports 80/443 et les certificats de tous les projets.
 
 ## Développement local
 
