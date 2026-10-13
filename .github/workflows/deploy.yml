@@ -1,0 +1,73 @@
+# À chaque push sur main : image de prod poussée sur ghcr.io, puis déploiement sur le serveur
+# (/opt/rwojtko, derrière le Caddy frontal de /opt/caddy).
+name: Déploiement
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  image:
+    name: Image de prod
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/frankenphp/Dockerfile
+          target: prod
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/rodow/rwojtko.fr:${{ github.sha }}
+            ghcr.io/rodow/rwojtko.fr:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploiement:
+    name: Déploiement sur rwojtko.fr
+    needs: image
+    runs-on: ubuntu-latest
+    environment: production
+    # Un seul déploiement à la fois : le plus récent attend la fin du précédent.
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v5
+      - name: Accès SSH au serveur
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          echo "${{ vars.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+      - name: Mise en ligne
+        env:
+          SERVEUR: ${{ vars.DEPLOY_USER }}@${{ vars.DEPLOY_HOST }}
+          IMAGE: ghcr.io/rodow/rwojtko.fr:${{ github.sha }}
+        run: |
+          scp docker-compose.yml "$SERVEUR:/opt/rwojtko/docker-compose.yml"
+          # Le jeton de la CI (valable le temps du job) sert au serveur à récupérer l'image privée.
+          echo "${{ secrets.GITHUB_TOKEN }}" | ssh "$SERVEUR" "docker login ghcr.io -u ${{ github.actor }} --password-stdin"
+          # .env du serveur (secrets) intouché : l'image est passée par l'environnement.
+          # prune -a : supprime les images que plus aucun conteneur n'utilise (anciennes versions).
+          ssh "$SERVEUR" "set -e
+            cd /opt/rwojtko
+            export IMAGE=$IMAGE
+            docker compose pull --quiet
+            docker logout ghcr.io
+            docker compose up -d --remove-orphans
+            docker image prune -af"

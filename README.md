@@ -6,6 +6,9 @@ En production : un seul conteneur (FrankenPHP), image immuable poussée sur ghcr
 HTTP simple (`SERVER_NAME=:80`) sur le réseau Docker `web` : le Caddy frontal du serveur
 (`/opt/caddy`) tient les ports 80/443 et les certificats de tous les projets.
 
+Déploiement : chaque push sur `main` construit l'image et la met en ligne
+(`.github/workflows/deploy.yml`, environnement GitHub `production`).
+
 ## Développement local
 
 ```bash
