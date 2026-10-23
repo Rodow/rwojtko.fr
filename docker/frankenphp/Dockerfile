@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
 
-FROM dunglas/frankenphp:1-php8.5-alpine AS base
+# Version figée : une montée de PHP (correctifs de sécurité) est un commit explicite.
+FROM dunglas/frankenphp:1.13.2-php8.5.12-alpine AS base
 
 WORKDIR /app
 
