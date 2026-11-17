@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Rodolphe Wojtkowiak - DevOps / Développeur Web Backend{% endblock %}
+{% block title %}Rodolphe Wojtkowiak - DevOps / Développeur Backend{% endblock %}
 
 {% block body %}
     {#
@@ -42,7 +42,7 @@
             <aside class="hero-profile">
                 <img src="/images/photo-rodolphe.jpeg" alt="Rodolphe Wojtkowiak" class="profile-photo">
                 <h1>Rodolphe <span>Wojtkowiak</span></h1>
-                <p class="subtitle">DevOps / Développeur Web Backend</p>
+                <p class="subtitle">DevOps / Développeur Backend</p>
                 <p class="tagline">+6 ans d'expérience en développement, dont 2 en DevOps. Passionné, rigoureux, esprit d'équipe.</p>
                 <div class="hero-links">
                     <a href="mailto:rodolphewojtko@gmail.com" class="primary">Me contacter</a>
@@ -50,7 +50,7 @@
                        class="secondary">LinkedIn</a>
                 </div>
             </aside>
-            <div id="skills" class="hero-skills">
+            <div id="skills" class="hero-skills" data-controller="pipeline" data-pipeline-interval-value="1100">
                 <h2 class="pipeline-lead">Du code à la production, avec l'IA à chaque étape</h2>
                 {# ai : usage concret de l'IA à cette étape (rail de droite). #}
                 {% set pipeline = [
@@ -72,9 +72,15 @@
                         <span class="ai-logos__item"><img src="/images/claude.svg" alt="">Claude Code</span>
                         <span class="ai-logos__item"><img src="/images/gemini.svg" alt="">Gemini</span>
                         <span class="ai-logos__item"><img src="/images/openai.svg" alt="">OpenAI</span>
+                        {# Après un tour de défilement : les trois logos ensemble (les noms restent lus ci-dessus). #}
+                        <span class="ai-logos__all" aria-hidden="true">
+                            <img src="/images/claude.svg" alt="">
+                            <img src="/images/gemini.svg" alt="">
+                            <img src="/images/openai.svg" alt="">
+                        </span>
                     </div>
                 </div>
-                <ol class="pipeline" data-controller="pipeline" data-pipeline-interval-value="1100">
+                <ol class="pipeline">
                     {% for stage in pipeline %}
                         <li class="pipeline-stage" data-pipeline-target="stage">
                             <div class="pipeline-stage__label">
@@ -94,6 +100,8 @@
                         </li>
                     {% endfor %}
                 </ol>
+                {# Hors de la liste pour ne pas compter comme une étape (:last-child). #}
+                <div class="pipeline-done" data-pipeline-target="done">Prêt pour la prod</div>
             </div>
         </div>
         <a href="#experience" class="scroll-indicator" aria-label="Voir les expériences">
@@ -111,7 +119,7 @@
             <h2 class="section-title section-title--rail">Expériences</h2>
             {# ai : tâche liée à l'IA, affichée en violet comme le rail IA de l'accueil. #}
             {% set experiences = [
-                {title: 'DevOps / Développeur Web Backend', company: 'Ponera', period: '2024 — Présent', current: true,
+                {title: 'DevOps / Développeur Backend', company: 'Ponera', period: '2024 — Présent', current: true,
                     logo: 'logo_ponera_blanc.png',
                     tasks: [
                         {text: 'Gestion de l\'infrastructure dédiée et cloud (OVHcloud, une vingtaine de serveurs) avec Ansible et Terraform'},
@@ -124,7 +132,7 @@
                         {text: 'Création d\'une marketplace interne de skills et serveurs MCP pour outiller l\'équipe en IA', ai: true},
                         {text: 'Maintien et modernisation de l\'application PHP historique'},
                     ]},
-                {title: 'Développeur Web Backend', company: 'Ankama, Roubaix', period: '2020 — 2024',
+                {title: 'Développeur Backend', company: 'Ankama, Roubaix', period: '2020 — 2024',
                     logo: 'Ankama_Games_Logo_3.png',
                     tasks: [
                         {text: 'Maintien et amélioration de la base de code'},
@@ -134,7 +142,7 @@
                         {text: 'Consommation d\'APIs externes avec utilisation de SDK'},
                         {text: 'Mise à jour des versions de base de données'},
                     ]},
-                {title: 'Développeur Web Fullstack', company: 'PSI (Libelule), Bordeaux', period: '2019 — 2020',
+                {title: 'Développeur Fullstack', company: 'PSI (Libelule), Bordeaux', period: '2019 — 2020',
                     logo: 'logo-psi-sansbaseline-shd-2.png',
                     tasks: [
                         {text: 'Création de backoffices web et d\'API avec Laravel'},
@@ -230,7 +238,7 @@
     <svg class="site-rail" aria-hidden="true"
          data-controller="site-rail"
          data-site-rail-segments-value="{{ [
-             {from: '.pipeline-stage:last-child', title: '#experience .section-title', to: '#experience .career-item:first-child'},
+             {from: '.pipeline-done', title: '#experience .section-title', to: '#experience .career-item:first-child'},
              {from: '#experience .career-item:last-child', title: '#formation .section-title', to: '#formation .career-item:first-child'},
          ]|json_encode|e('html_attr') }}"></svg>
 {% endblock %}

@@ -460,7 +460,6 @@ section {
 }
 
 .pipeline-stage:first-child::before { top: 50%; }
-.pipeline-stage:last-child::before { bottom: 50%; }
 
 .pipeline-stage.is-done::before {
     background: #10b981;
@@ -469,11 +468,6 @@ section {
 /* Étape en cours : le rail est rempli jusqu'au nœud. */
 .pipeline-stage.is-active:not(:first-child)::before {
     background: linear-gradient(#10b981 50%, rgb(var(--ink) / 0.1) 50%);
-}
-
-/* Dernière étape : le rail s'arrête déjà au nœud, il est donc entièrement rempli. */
-.pipeline-stage.is-active:last-child::before {
-    background: #10b981;
 }
 
 /* Nœud */
@@ -526,6 +520,74 @@ section {
     flex-wrap: wrap;
     align-items: center;
     gap: 0.6rem;
+}
+
+/* Fin du pipeline : un check CI, en attente pendant le run puis vert une fois tout validé. */
+.pipeline-done {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 3.5rem;
+    padding-left: 2.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgb(var(--ink) / 0.45);
+    transition: color 0.2s ease;
+    /* Arrive juste après l'étape 6, dans la même cascade que les étapes. */
+    animation: rise 0.45s ease-out 0.36s both;
+}
+
+/* Rail depuis l'étape 6 jusqu'au check. */
+.pipeline-done::before {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 0;
+    bottom: 50%;
+    width: 2px;
+    background: rgb(var(--ink) / 0.1);
+}
+
+.pipeline-done::after {
+    content: '';
+    position: absolute;
+    left: -2px;
+    top: 50%;
+    width: 28px;
+    height: 28px;
+    margin-top: -14px;
+    border-radius: 50%;
+    background: var(--node-bg);
+    border: 2px solid rgb(var(--ink) / 0.25);
+}
+
+.pipeline-done.is-done {
+    color: #10b981;
+}
+
+.pipeline-done.is-done::before {
+    background: #10b981;
+}
+
+.pipeline-done.is-done::after {
+    border-color: #10b981;
+    background: #10b981 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / 16px no-repeat;
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.2), 0 0 20px #10b981;
+    animation: check-pop 0.4s ease-out;
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+}
+
+@keyframes check-pop {
+    0% { transform: scale(0.6); }
+    60% { transform: scale(1.15); }
+    100% { transform: scale(1); }
 }
 
 /* Compétence : badge clair (les logos sont dessinés pour un fond blanc).
@@ -600,31 +662,55 @@ section {
     padding-right: 2.75rem;
 }
 
-/* Logos des IA qui défilent en tête du rail : un seul visible à la fois. */
+/* Logos des IA en tête du rail : un seul tour de défilement (un logo à la fois),
+   puis les trois logos ensemble. */
 .ai-logos {
     position: relative;
     height: 2.5rem;
 }
 
-.ai-logos__item {
+.ai-logos__item,
+.ai-logos__all {
     position: absolute;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: flex-end;
+}
+
+.ai-logos__item {
     gap: 0.6rem;
     font-size: 1.1rem;
     font-weight: 600;
     color: rgb(var(--ink));
-    animation: ai-cycle 6s infinite both;
+    animation: ai-cycle 6s both;
 }
 
 .ai-logos__item:nth-child(2) { animation-delay: 2s; }
 .ai-logos__item:nth-child(3) { animation-delay: 4s; }
 
-.ai-logos__item img {
+.ai-logos__item img,
+.ai-logos__all img {
     width: 28px;
     height: 28px;
+}
+
+/* Apparaît quand le troisième logo a fini son passage (2 s × 3). */
+.ai-logos__all {
+    gap: 0.9rem;
+    opacity: 0;
+    animation: ai-all 0.4s ease-out 6s forwards;
+}
+
+@keyframes ai-all {
+    from {
+        opacity: 0;
+        transform: translateY(60%);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes ai-cycle {
@@ -747,7 +833,8 @@ section {
         padding: 0;
     }
 
-    .ai-logos__item {
+    .ai-logos__item,
+    .ai-logos__all {
         justify-content: flex-start;
     }
 }
@@ -757,6 +844,8 @@ section {
     position: absolute;
     top: 0;
     left: 0;
+    /* Tracé à la position finale des blocs : on attend la fin de leur apparition pour l'afficher. */
+    animation: fade-in 0.3s ease-out 0.8s both;
     /* Sous le contenu (z-index 1) : les nœuds masquent le trait qui en part. */
     z-index: 0;
     pointer-events: none;
@@ -770,12 +859,12 @@ section {
 }
 
 /* Le premier trait (sortie du pipeline) reste gris comme un rail inactif,
-   et passe au vert quand le run atteint la dernière étape. */
+   et passe au vert quand le run est terminé (coche « Prêt pour la prod »). */
 .site-rail path:first-child {
     stroke: rgb(var(--ink) / 0.1);
 }
 
-body:has(.pipeline-stage:last-child:is(.is-active, .is-done)) .site-rail path:first-child {
+body:has(.pipeline-done.is-done) .site-rail path:first-child {
     stroke: #10b981;
 }
 
@@ -910,11 +999,6 @@ footer {
         top: 1.6rem;
     }
 
-    .pipeline-stage:last-child::before {
-        bottom: auto;
-        height: 1.6rem;
-    }
-
     .pipeline-stage.is-active:not(:first-child)::before {
         background: linear-gradient(#10b981 1.6rem, rgb(var(--ink) / 0.1) 1.6rem);
     }
@@ -991,7 +1075,12 @@ footer {
         transition: none !important;
     }
 
-    .ai-logos__item:not(:first-child) {
+    /* Sans animation : directement les trois logos ensemble. */
+    .ai-logos__item {
         display: none;
+    }
+
+    .ai-logos__all {
+        opacity: 1;
     }
 }
