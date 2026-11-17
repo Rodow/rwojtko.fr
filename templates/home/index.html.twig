@@ -3,217 +3,189 @@
 {% block title %}Rodolphe Wojtkowiak - DevOps / Développeur Web Backend{% endblock %}
 
 {% block body %}
+    {#
+        Technos affichées en badge.
+        major : parmi les plus demandées, affichée en grand dans le pipeline.
+        brand : couleur au moment où le badge s'allume.
+    #}
+    {% set techs = {
+        php: {name: 'PHP', logo: 'php.svg', brand: '#777bb4', major: true},
+        symfony: {name: 'Symfony', logo: 'symfony.svg', brand: '#ffffff', major: true},
+        scala: {name: 'Scala', logo: 'scala.svg', brand: '#dc322f'},
+        composer: {name: 'Composer', logo: 'composer.svg', brand: '#885630'},
+        github_actions: {name: 'GitHub Actions', logo: 'github-actions.svg', brand: '#2088ff', major: true},
+        git: {name: 'Git', logo: 'git.svg', brand: '#f05032'},
+        docker: {name: 'Docker', logo: 'docker.svg', brand: '#2496ed', major: true},
+        terraform: {name: 'Terraform', logo: 'terraform.svg', brand: '#7b42bc', major: true},
+        ansible: {name: 'Ansible', logo: 'ansible_logo_black_square.png', brand: '#ee0000', major: true},
+        linux: {name: 'Linux', logo: 'linux.svg', brand: '#fcc624'},
+        ovhcloud: {name: 'OVHCloud', brand: '#00d4ff'},
+        mysql: {name: 'MySQL', logo: 'mysql.svg', brand: '#00758f', major: true},
+        vitess: {name: 'Vitess', logo: 'vitess.png', brand: '#00d88a', major: true},
+        clickhouse: {name: 'ClickHouse', logo: 'clickhouse.svg', brand: '#ffcc01'},
+        timescaledb: {name: 'TimescaleDB', brand: '#fdb515'},
+        grafana: {name: 'Grafana', logo: 'grafana.svg', brand: '#f46800', major: true},
+        prometheus: {name: 'Prometheus', logo: 'prometheus.svg', brand: '#e6522c', major: true},
+        loki: {name: 'Loki', logo: 'loki.png', brand: '#f4b400'},
+        pmm: {name: 'PMM', brand: '#10b981'},
+        netdata: {name: 'Netdata', logo: 'netdata.png', brand: '#00ab44'},
+    } %}
     <div class="bg-shapes">
         <div class="shape"></div>
         <div class="shape"></div>
         <div class="shape"></div>
     </div>
 
-    <!-- Hero -->
+    <!-- Accueil : profil à gauche, compétences à droite -->
     <section class="hero">
-        <div class="container">
-            <div class="hero-content">
+        <div class="container container--wide hero-layout">
+            <aside class="hero-profile">
                 <img src="/images/photo-rodolphe.jpeg" alt="Rodolphe Wojtkowiak" class="profile-photo">
                 <h1>Rodolphe <span>Wojtkowiak</span></h1>
                 <p class="subtitle">DevOps / Développeur Web Backend</p>
-                <p class="tagline">+5 ans d'expérience en développement web. Passionné, rigoureux, esprit d'équipe.</p>
+                <p class="tagline">+6 ans d'expérience en développement, dont 2 en DevOps. Passionné, rigoureux, esprit d'équipe.</p>
                 <div class="hero-links">
                     <a href="mailto:rodolphewojtko@gmail.com" class="primary">Me contacter</a>
                     <a href="https://www.linkedin.com/in/rodolphe-wojtkowiak" target="_blank" rel="noopener"
                        class="secondary">LinkedIn</a>
                 </div>
+            </aside>
+            <div id="skills" class="hero-skills">
+                <h2 class="pipeline-lead">Du code à la production, avec l'IA à chaque étape</h2>
+                {# ai : usage concret de l'IA à cette étape (rail de droite). #}
+                {% set pipeline = [
+                    {label: 'Code', skills: ['php', 'symfony', 'scala', 'composer'],
+                        ai: ['Claude Code, plusieurs agents en parallèle', 'Skills maison : tests, couverture']},
+                    {label: 'Intégration continue', skills: ['github_actions', 'git'],
+                        ai: ['Revue de code par IA', 'Issue → PR par un agent']},
+                    {label: 'Conteneurs', skills: ['docker'],
+                        ai: ['Skill de mise en place du déploiement continu']},
+                    {label: 'Infrastructure', skills: ['terraform', 'ansible', 'linux', 'ovhcloud'],
+                        ai: ['Agents IA pour les power users, déployés par Ansible', 'MCP d\'orchestration : les agents pilotent les crons']},
+                    {label: 'Données', skills: ['mysql', 'vitess', 'clickhouse', 'timescaledb'],
+                        ai: ['MCP multi-bases en lecture seule (MySQL, ClickHouse…)']},
+                    {label: 'Observabilité', skills: ['grafana', 'prometheus', 'loki', 'pmm', 'netdata'],
+                        ai: ['Diagnostic d\'incidents par agent (PMM, Netdata, Loki)', 'Suivi des frictions des agents IA']},
+                ] %}
+                <div class="pipeline-head">
+                    <div class="ai-logos">
+                        <span class="ai-logos__item"><img src="/images/claude.svg" alt="">Claude Code</span>
+                        <span class="ai-logos__item"><img src="/images/gemini.svg" alt="">Gemini</span>
+                        <span class="ai-logos__item"><img src="/images/openai.svg" alt="">OpenAI</span>
+                    </div>
+                </div>
+                <ol class="pipeline" data-controller="pipeline" data-pipeline-interval-value="1100">
+                    {% for stage in pipeline %}
+                        <li class="pipeline-stage" data-pipeline-target="stage">
+                            <div class="pipeline-stage__label">
+                                <span class="pipeline-stage__step">{{ '%02d'|format(loop.index) }}</span>
+                                {{ stage.label }}
+                            </div>
+                            <div class="pipeline-stage__skills">
+                                {% for key in stage.skills %}
+                                    {{ include('home/_skill.html.twig', {skill: techs[key]}) }}
+                                {% endfor %}
+                            </div>
+                            <ul class="pipeline-stage__ai">
+                                {% for usage in stage.ai %}
+                                    <li>{{ usage }}</li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                    {% endfor %}
+                </ol>
             </div>
         </div>
-        <div class="scroll-indicator">
+        <a href="#experience" class="scroll-indicator" aria-label="Voir les expériences">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
             </svg>
-        </div>
+        </a>
     </section>
 
-    <!-- Compétences -->
-    <section id="skills">
-        <div class="container">
-            <h2 class="section-title">Compétences</h2>
-            <div class="skills-grid" data-controller="skills-rotation" data-skills-rotation-interval-value="5000" data-skills-rotation-count-value="2">
-                <div class="skill-category">
-                    <h3>DevOps</h3>
-                    <div class="skill-tags">
-                        <span class="skill-tag--featured skill-tag--ansible">
-                            <img src="/images/ansible_logo_black_square.png" alt="Ansible">
-                            Ansible
-                        </span>
-                        <span class="skill-tag--featured skill-tag--docker">
-                            <img src="/images/docker.svg" alt="Docker">
-                            Docker
-                        </span>
-                        <span class="skill-tag--featured skill-tag--linux">
-                            <img src="/images/linux.svg" alt="Linux">
-                            Linux
-                        </span>
-                        <span class="skill-tag--featured skill-tag--ovhcloud">
-                            <img src="/images/ovhcloud.png" alt="OVHCloud">
-                            OVHCloud
-                        </span>
-                        <span class="skill-tag--featured skill-tag--github-actions">
-                            <img src="/images/github-actions.svg" alt="GitHub Actions">
-                            GitHub Actions
-                        </span>
-                    </div>
-                </div>
-                <div class="skill-category">
-                    <h3>Monitoring</h3>
-                    <div class="skill-tags">
-                        <span class="skill-tag--featured skill-tag--grafana">
-                            <img src="/images/grafana.svg" alt="Grafana">
-                            Grafana
-                        </span>
-                        <span class="skill-tag--featured skill-tag--prometheus">
-                            <img src="/images/prometheus.svg" alt="Prometheus">
-                            Prometheus
-                        </span>
-                        <span class="skill-tag--featured skill-tag--loki">
-                            <img src="/images/loki.png" alt="Loki">
-                            Loki
-                        </span>
-                        <span class="skill-tag">Promtail</span>
-                        <span class="skill-tag">PMM</span>
-                        <span class="skill-tag--featured skill-tag--netdata">
-                            <img src="/images/netdata.png" alt="NetData">
-                            NetData
-                        </span>
-                    </div>
-                </div>
-                <div class="skill-category">
-                    <h3>Backend</h3>
-                    <div class="skill-tags">
-                        <span class="skill-tag--featured skill-tag--php">
-                            <img src="/images/php.svg" alt="PHP">
-                            PHP
-                        </span>
-                        <span class="skill-tag--featured skill-tag--symfony">
-                            <img src="/images/symfony.svg" alt="Symfony">
-                            Symfony
-                        </span>
-                        <span class="skill-tag--featured skill-tag--scala">
-                            <img src="/images/scala.svg" alt="Scala">
-                            Scala
-                        </span>
-                        <span class="skill-tag">API REST</span>
-                    </div>
-                </div>
-                <div class="skill-category">
-                    <h3>Base de données</h3>
-                    <div class="skill-tags">
-                        <span class="skill-tag--featured skill-tag--mysql">
-                            <img src="/images/mysql.svg" alt="MySQL">
-                            MySQL
-                        </span>
-                        <span class="skill-tag--featured skill-tag--vitess">
-                            <img src="/images/vitess.png" alt="Vitess">
-                            Vitess
-                        </span>
-                        <span class="skill-tag--featured skill-tag--elasticsearch">
-                            <img src="/images/elasticsearch.svg" alt="Elasticsearch">
-                            Elasticsearch
-                        </span>
-                    </div>
-                </div>
-                <div class="skill-category">
-                    <h3>Frontend</h3>
-                    <div class="skill-tags">
-                        <span class="skill-tag">HTML/CSS</span>
-                        <span class="skill-tag">JavaScript</span>
-                    </div>
-                </div>
-                <div class="skill-category">
-                    <h3>Outils</h3>
-                    <div class="skill-tags">
-                        <span class="skill-tag--featured skill-tag--git">
-                            <img src="/images/git.svg" alt="Git">
-                            Git
-                        </span>
-                        <span class="skill-tag--featured skill-tag--composer">
-                            <img src="/images/composer.svg" alt="Composer">
-                            Composer
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Expériences -->
+    {# Tout ce qui suit l'accueil forme un seul point d'accroche du défilement (voir .cv-details). #}
+    <div class="cv-details">
+    <!-- Expériences : même rail que le pipeline, le poste actuel est l'étape « en cours » -->
     <section id="experience">
-        <div class="container">
-            <h2 class="section-title">Expériences</h2>
-            <div class="timeline">
-                <div class="timeline-item">
-                    <img src="/images/logo_ponera_blanc.png" alt="" class="timeline-item__logo">
-                    <h3>DevOps / Développeur Web Backend</h3>
-                    <p class="company">Ponera</p>
-                    <p class="period">2024 - Présent</p>
-                    <ul>
-                        <li>Maintien et modernisation de la base de code</li>
-                        <li>Mise en place du système de déploiement CI/CD</li>
-                        <li>Mise en place d'une base de données shardée avec Vitess</li>
-                        <li>Mise en place du monitoring avec PMM</li>
-                        <li>Gestion des serveurs avec Ansible</li>
-                    </ul>
-                </div>
-                <div class="timeline-item">
-                    <img src="/images/Ankama_Games_Logo_3.png" alt="" class="timeline-item__logo">
-                    <h3>Développeur Web Backend</h3>
-                    <p class="company">Ankama, Roubaix</p>
-                    <p class="period">2020 - 2024</p>
-                    <ul>
-                        <li>Maintien et amélioration de la base de code</li>
-                        <li>Amélioration et sécurisation des systèmes de connexion</li>
-                        <li>Création d'une nouvelle API Scala dédiée à l'e-shop</li>
-                        <li>Développement de scripts pour cron</li>
-                        <li>Consommation d'APIs externes avec utilisation de SDK</li>
-                        <li>Mise à jour des versions de base de données</li>
-                    </ul>
-                </div>
-                <div class="timeline-item">
-                    <img src="/images/logo-psi-sansbaseline-shd-2.png" alt="" class="timeline-item__logo">
-                    <h3>Développeur Web Fullstack</h3>
-                    <p class="company">PSI (Libelule), Bordeaux</p>
-                    <p class="period">2019 - 2020</p>
-                    <ul>
-                        <li>Création de backoffices web et d'API avec Laravel</li>
-                        <li>Intégration et développement front avec Blade et VueJS</li>
-                    </ul>
-                </div>
-            </div>
+        <div class="container container--wide">
+            <h2 class="section-title section-title--rail">Expériences</h2>
+            {# ai : tâche liée à l'IA, affichée en violet comme le rail IA de l'accueil. #}
+            {% set experiences = [
+                {title: 'DevOps / Développeur Web Backend', company: 'Ponera', period: '2024 — Présent', current: true,
+                    logo: 'logo_ponera_blanc.png',
+                    tasks: [
+                        {text: 'Gestion de l\'infrastructure dédiée et cloud (OVHcloud, une vingtaine de serveurs) avec Ansible et Terraform'},
+                        {text: 'Sécurisation des accès : bastion, VPN WireGuard, pare-feu piloté par Ansible'},
+                        {text: 'Conception et exploitation d\'un cluster MySQL shardé avec Vitess : bascules de primaire, optimisation des requêtes lentes'},
+                        {text: 'Mise en place de l\'observabilité : PMM, Prometheus, Grafana, Loki, Netdata, alertes Slack'},
+                        {text: 'Déploiement continu des applications : GitHub Actions, images Docker, mise en production automatique'},
+                        {text: 'Développement d\'un orchestrateur de jobs interne (Symfony) et migration des crons historiques'},
+                        {text: 'Mise à disposition d\'agents IA pour les power users, déployés et supervisés par Ansible', ai: true},
+                        {text: 'Création d\'une marketplace interne de skills et serveurs MCP pour outiller l\'équipe en IA', ai: true},
+                        {text: 'Maintien et modernisation de l\'application PHP historique'},
+                    ]},
+                {title: 'Développeur Web Backend', company: 'Ankama, Roubaix', period: '2020 — 2024',
+                    logo: 'Ankama_Games_Logo_3.png',
+                    tasks: [
+                        {text: 'Maintien et amélioration de la base de code'},
+                        {text: 'Amélioration et sécurisation des systèmes de connexion'},
+                        {text: 'Création d\'une nouvelle API Scala dédiée à l\'e-shop'},
+                        {text: 'Développement de scripts pour cron'},
+                        {text: 'Consommation d\'APIs externes avec utilisation de SDK'},
+                        {text: 'Mise à jour des versions de base de données'},
+                    ]},
+                {title: 'Développeur Web Fullstack', company: 'PSI (Libelule), Bordeaux', period: '2019 — 2020',
+                    logo: 'logo-psi-sansbaseline-shd-2.png',
+                    tasks: [
+                        {text: 'Création de backoffices web et d\'API avec Laravel'},
+                        {text: 'Intégration et développement front avec Blade et VueJS'},
+                    ]},
+            ] %}
+            <ol class="career">
+                {% for job in experiences %}
+                    <li class="career-item{{ job.current is defined ? ' is-current' }}">
+                        <div class="career-item__when">
+                            <span class="career-item__period">{{ job.period }}</span>
+                            {{ job.company }}
+                        </div>
+                        <article class="career-card">
+                            <img src="/images/{{ job.logo }}" alt="" class="career-card__logo">
+                            <h3>{{ job.title }}</h3>
+                            <ul class="career-card__tasks">
+                                {% for task in job.tasks %}
+                                    <li{{ task.ai is defined ? ' class="is-ai"' }}>{{ task.text }}</li>
+                                {% endfor %}
+                            </ul>
+                        </article>
+                    </li>
+                {% endfor %}
+            </ol>
         </div>
     </section>
 
-    <!-- Formation -->
+    <!-- Formation : même rail que les expériences -->
     <section id="formation">
-        <div class="container">
-            <h2 class="section-title">Formation</h2>
-            <div class="formation-item">
-                <div>
-                    <h3>Titre professionnel Développeur Web et Web Mobile</h3>
-                    <p class="school">O'Clock</p>
-                </div>
-                <span class="year">2020</span>
-            </div>
-            <div class="formation-item">
-                <div>
-                    <h3>Master Marketing et Communication</h3>
-                    <p class="school">Esupcom Lille</p>
-                </div>
-                <span class="year">2017</span>
-            </div>
-            <div class="formation-item">
-                <div>
-                    <h3>Licence Économie et Gestion</h3>
-                    <p class="school">IAE Valenciennes</p>
-                </div>
-                <span class="year">2015</span>
-            </div>
+        <div class="container container--wide">
+            <h2 class="section-title section-title--rail">Formation</h2>
+            {% set formations = [
+                {title: 'Perfectionnement DevOps : programme intensif de 6 semaines avec mentorat', school: 'Cocadmin', year: '2026'},
+                {title: 'Titre professionnel Développeur Web et Web Mobile', school: 'O\'Clock', year: '2020'},
+                {title: 'Master Marketing et Communication', school: 'Esupcom Lille', year: '2017'},
+                {title: 'Licence Économie et Gestion', school: 'IAE Valenciennes', year: '2015'},
+            ] %}
+            <ol class="career">
+                {% for formation in formations %}
+                    <li class="career-item">
+                        <div class="career-item__when">
+                            <span class="career-item__period">{{ formation.year }}</span>
+                            {{ formation.school }}
+                        </div>
+                        <article class="career-card">
+                            <h3>{{ formation.title }}</h3>
+                        </article>
+                    </li>
+                {% endfor %}
+            </ol>
         </div>
     </section>
 
@@ -249,4 +221,16 @@
     <footer>
         <p>&copy; {{ 'now'|date('Y') }} Rodolphe Wojtkowiak</p>
     </footer>
+    </div>
+
+    {#
+        Trait continu qui relie les rails : point 6 du pipeline → souligne « Expériences » → rail des expériences,
+        puis dernier poste → souligne « Formation » → rail de la formation. Tracé en JS (voir site_rail_controller.js).
+    #}
+    <svg class="site-rail" aria-hidden="true"
+         data-controller="site-rail"
+         data-site-rail-segments-value="{{ [
+             {from: '.pipeline-stage:last-child', title: '#experience .section-title', to: '#experience .career-item:first-child'},
+             {from: '#experience .career-item:last-child', title: '#formation .section-title', to: '#formation .career-item:first-child'},
+         ]|json_encode|e('html_attr') }}"></svg>
 {% endblock %}

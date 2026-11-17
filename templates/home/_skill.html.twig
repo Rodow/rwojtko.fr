@@ -1,0 +1,5 @@
+{# Badge d'une techno (entrée de la table techs), en grand si elle est parmi les plus demandées. #}
+<span class="skill{{ skill.major is defined ? ' skill--major' }}" style="--brand: {{ skill.brand }}">
+    {% if skill.logo is defined %}<img src="/images/{{ skill.logo }}" alt="">{% endif %}
+    {{ skill.name }}
+</span>
